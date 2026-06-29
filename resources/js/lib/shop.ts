@@ -340,6 +340,8 @@ export const shopRoutes = {
     checkout: () => '/checkout',
     orders: () => '/orders',
     order: (id: number) => `/orders/${id}`,
+    login: () => '/account/login',
+    register: () => '/account/register',
 };
 
 export function formatPrice(value: number): string {
