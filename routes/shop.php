@@ -24,3 +24,6 @@ Route::inertia('checkout', 'shop/Checkout')->name('checkout');
 
 Route::inertia('orders', 'shop/Orders')->name('orders.index');
 Route::inertia('orders/{order}', 'shop/OrderDetail')->name('orders.show');
+
+Route::inertia('account/login', 'shop/Login')->name('shop.login');
+Route::inertia('account/register', 'shop/Register')->name('shop.register');
