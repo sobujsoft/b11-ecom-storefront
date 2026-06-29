@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Product — B11 Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body data-page="shop" class="bg-white text-neutral-900 antialiased">
+    <div id="site-header"></div>
+
+    <main class="mx-auto max-w-7xl px-4 py-8">
+        <nav class="mb-6 flex items-center gap-1 text-sm text-neutral-500">
+            <a href="index.html" class="hover:text-neutral-900">Home</a>
+            <i data-lucide="chevron-right" class="size-4"></i>
+            <a href="products.html" class="hover:text-neutral-900">Shop</a>
+            <i data-lucide="chevron-right" class="size-4"></i>
+            <span id="crumb" class="text-neutral-900"></span>
+        </nav>
+
+        <div class="grid gap-10 lg:grid-cols-2">
+            <!-- Gallery -->
+            <div class="flex flex-col gap-4">
+                <div class="aspect-square overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100">
+                    <img id="main-image" src="" alt="" class="h-full w-full object-cover" />
+                </div>
+                <div id="thumbs" class="grid grid-cols-4 gap-3"></div>
+            </div>
+
+            <!-- Info -->
+            <div id="info"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mt-14">
+            <div class="flex gap-6 border-b border-neutral-200">
+                <button data-tab="details" class="tab -mb-px border-b-2 border-neutral-900 px-1 pb-3 text-sm font-medium">Description</button>
+                <button data-tab="reviews" class="tab -mb-px border-b-2 border-transparent px-1 pb-3 text-sm font-medium text-neutral-500">Reviews (3)</button>
+            </div>
+
+            <div id="tab-details" class="max-w-3xl py-6">
+                <p id="desc" class="text-neutral-500"></p>
+                <ul class="mt-4 space-y-2 text-sm text-neutral-500">
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="size-4 text-neutral-900"></i> Premium build quality and materials</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check" class="size-4 text-neutral-900"></i> Backed by a 12-month manufacturer warranty</li>
+                    <li id="meta" class="flex items-center gap-2"><i data-lucide="check" class="size-4 text-neutral-900"></i></li>
+                </ul>
+            </div>
+
+            <div id="tab-reviews" class="hidden grid-cols-3 gap-10 py-6 lg:grid">
+                <div class="space-y-6 lg:col-span-2">
+                    <div class="flex gap-4">
+                        <div class="grid size-10 shrink-0 place-items-center rounded-full bg-neutral-100 text-sm font-semibold">SJ</div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between"><p class="text-sm font-semibold">Sarah Johnson</p><p class="text-xs text-neutral-500">May 12, 2026</p></div>
+                            <div class="mt-1 flex"><i data-lucide="star" class="size-4 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-4 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-4 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-4 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-4 fill-amber-400 text-amber-400"></i></div>
+                            <p class="mt-2 text-sm text-neutral-500">Sound quality is incredible and the noise cancellation is a game changer on flights. Worth every penny.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="grid size-10 shrink-0 place-items-center rounded-full bg-neutral-100 text-sm font-semibold">MC</div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between"><p class="text-sm font-semibold">Michael Chen</p><p class="text-xs text-neutral-500">May 28, 2026</p></div>
+                            <div class="mt-1 flex"><i data-lucide="star" class="size-4 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-4 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-4 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-4 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-4 fill-neutral-200 text-neutral-300"></i></div>
+                            <p class="mt-2 text-sm text-neutral-500">Very comfortable for long sessions. Battery lasts forever. Wish the case was a bit smaller.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="rounded-xl border border-neutral-200 p-5">
+                    <h3 class="font-semibold">Write a review</h3>
+                    <p class="mt-1 text-xs text-neutral-500">Share your experience with this product</p>
+                    <form class="mt-4 space-y-4" onsubmit="return false">
+                        <div>
+                            <p class="mb-1.5 text-sm font-medium">Rating</p>
+                            <div class="flex gap-1">
+                                <i data-lucide="star" class="size-6 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-6 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-6 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-6 fill-amber-400 text-amber-400"></i><i data-lucide="star" class="size-6 fill-amber-400 text-amber-400"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="mb-1.5 text-sm font-medium">Comment</p>
+                            <textarea rows="4" placeholder="What did you like or dislike?" class="w-full rounded-md border border-neutral-200 bg-transparent px-3 py-2 text-sm outline-none focus:border-neutral-900"></textarea>
+                        </div>
+                        <button class="w-full rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800">Submit Review</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related -->
+        <div class="mt-14">
+            <h2 class="mb-6 text-2xl font-bold tracking-tight">You may also like</h2>
+            <div id="related" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"></div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+
+    <script src="assets/shared.js"></script>
+    <script>
+        window.renderPage = function () {
+            const id = new URLSearchParams(location.search).get('id') || 1;
+            const p = findProduct(id);
+            document.title = p.name + ' — B11 Shop';
+            document.getElementById('crumb').textContent = p.name;
+            document.getElementById('desc').textContent =
+                'Immersive, well-built and reliable — the ' + p.name + ' is designed to perform day in, day out.';
+            document.getElementById('meta').innerHTML =
+                '<i data-lucide="check" class="size-4 text-neutral-900"></i> Brand: ' + p.brand + ' · Category: ' + p.category;
+
+            const thumbs = [
+                p.image,
+                'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=400&q=80',
+                'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=400&q=80',
+                'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?auto=format&fit=crop&w=400&q=80',
+            ];
+            document.getElementById('main-image').src = thumbs[0];
+            document.getElementById('main-image').alt = p.name;
+            document.getElementById('thumbs').innerHTML = thumbs.map((t, i) =>
+                `<button data-img="${t}" class="thumb aspect-square overflow-hidden rounded-lg border-2 ${i === 0 ? 'border-neutral-900' : 'border-transparent'}"><img src="${t}" class="h-full w-full object-cover" /></button>`).join('');
+
+            const off = p.old_price ? `<span class="text-lg text-neutral-400 line-through">${formatPrice(p.old_price)}</span><span class="rounded-full bg-red-600 px-2 py-0.5 text-xs font-medium text-white">Save ${formatPrice(p.old_price - p.price)}</span>` : '';
+            document.getElementById('info').innerHTML = `
+                <div class="flex items-center gap-2"><span class="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium">${p.category}</span><span class="text-sm text-neutral-500">by ${p.brand}</span></div>
+                <h1 class="mt-3 text-3xl font-bold tracking-tight">${p.name}</h1>
+                <div class="mt-3">${starsHTML(p.rating, p.reviews)}</div>
+                <div class="mt-6 flex items-baseline gap-3"><span class="text-3xl font-bold">${formatPrice(p.price)}</span>${off}</div>
+                <p class="mt-5 text-neutral-500">A great everyday product from ${p.brand}, crafted for comfort and built to last.</p>
+                <div class="mt-4 flex items-center gap-2 text-sm text-green-600"><i data-lucide="check" class="size-4"></i> In stock and ready to ship</div>
+                <div class="my-6 h-px bg-neutral-200"></div>
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center rounded-lg border border-neutral-200">
+                        <button class="grid size-9 place-items-center rounded-l-lg hover:bg-neutral-100"><i data-lucide="minus" class="size-4"></i></button>
+                        <span class="w-12 text-center text-sm font-medium">1</span>
+                        <button class="grid size-9 place-items-center rounded-r-lg hover:bg-neutral-100"><i data-lucide="plus" class="size-4"></i></button>
+                    </div>
+                    <button class="flex flex-1 items-center justify-center gap-2 rounded-md bg-neutral-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-neutral-800"><i data-lucide="shopping-cart" class="size-4"></i> Add to Cart</button>
+                    <button class="grid size-11 place-items-center rounded-md border border-neutral-200 hover:bg-neutral-100"><i data-lucide="heart" class="size-4"></i></button>
+                </div>
+                <div class="mt-6 grid gap-3 rounded-xl border border-neutral-200 p-4 sm:grid-cols-2">
+                    <div class="flex items-center gap-3"><i data-lucide="truck" class="size-5 text-neutral-400"></i><div><p class="text-sm font-medium">Free shipping</p><p class="text-xs text-neutral-500">On orders over $100</p></div></div>
+                    <div class="flex items-center gap-3"><i data-lucide="rotate-ccw" class="size-5 text-neutral-400"></i><div><p class="text-sm font-medium">30-day returns</p><p class="text-xs text-neutral-500">Money-back guarantee</p></div></div>
+                </div>`;
+
+            renderGrid('related', PRODUCTS.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 4));
+
+            // thumbnail switching
+            setTimeout(() => {
+                document.querySelectorAll('.thumb').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        document.getElementById('main-image').src = btn.dataset.img;
+                        document.querySelectorAll('.thumb').forEach((b) => b.classList.replace('border-neutral-900', 'border-transparent'));
+                        btn.classList.replace('border-transparent', 'border-neutral-900');
+                    });
+                });
+                // tab switching
+                document.querySelectorAll('.tab').forEach((tab) => {
+                    tab.addEventListener('click', () => {
+                        const target = tab.dataset.tab;
+                        document.querySelectorAll('.tab').forEach((t) => {
+                            const on = t.dataset.tab === target;
+                            t.classList.toggle('border-neutral-900', on);
+                            t.classList.toggle('border-transparent', !on);
+                            t.classList.toggle('text-neutral-500', !on);
+                        });
+                        document.getElementById('tab-details').classList.toggle('hidden', target !== 'details');
+                        document.getElementById('tab-reviews').classList.toggle('hidden', target !== 'reviews');
+                        document.getElementById('tab-reviews').classList.toggle('lg:grid', target === 'reviews');
+                    });
+                });
+            }, 0);
+        };
+    </script>
+</body>
+</html>

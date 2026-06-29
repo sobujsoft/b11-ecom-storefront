@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "/Users/sobuj/Library/Application Support/Herd/bin/php84",
+            "args": [
+                "/Users/sobuj/Projects/ostad/php-b11/b11-ecom-storefront/artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}

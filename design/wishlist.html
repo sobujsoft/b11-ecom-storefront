@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wishlist — B11 Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body data-page="wishlist" class="bg-white text-neutral-900 antialiased">
+    <div id="site-header"></div>
+
+    <main class="mx-auto max-w-7xl px-4 py-8">
+        <h1 class="text-3xl font-bold tracking-tight">My Wishlist</h1>
+        <p class="mt-1 text-sm text-neutral-500"><span id="count">4</span> saved items</p>
+        <div id="items" class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </main>
+
+    <div id="site-footer"></div>
+
+    <script src="assets/shared.js"></script>
+    <script>
+        const wishlist = [findProduct(2), findProduct(6), findProduct(10), findProduct(12)];
+
+        function cardHTML(p) {
+            return `
+            <div class="flex gap-4 rounded-xl border border-neutral-200 p-4">
+                <a href="product-detail.html?id=${p.id}" class="size-28 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100"><img src="${p.image}" class="h-full w-full object-cover" /></a>
+                <div class="flex flex-1 flex-col">
+                    <span class="mb-1 w-fit rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium">${p.category}</span>
+                    <a href="product-detail.html?id=${p.id}" class="line-clamp-2 text-sm font-semibold hover:underline">${p.name}</a>
+                    <div class="mt-1">${starsHTML(p.rating, p.reviews)}</div>
+                    <p class="mt-1 font-bold">${formatPrice(p.price)}</p>
+                    <div class="mt-auto flex items-center gap-2 pt-3">
+                        <button class="flex flex-1 items-center justify-center gap-2 rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800"><i data-lucide="shopping-cart" class="size-4"></i> Add to cart</button>
+                        <button class="grid size-8 place-items-center rounded-md border border-neutral-200 text-neutral-500 hover:text-red-600"><i data-lucide="trash-2" class="size-4"></i></button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        window.renderPage = function () {
+            document.getElementById('count').textContent = wishlist.length;
+            document.getElementById('items').innerHTML = wishlist.map(cardHTML).join('');
+        };
+    </script>
+</body>
+</html>

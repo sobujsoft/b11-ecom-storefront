@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Checkout — B11 Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body data-page="cart" class="bg-white text-neutral-900 antialiased">
+    <div id="site-header"></div>
+
+    <main class="mx-auto max-w-7xl px-4 py-8">
+        <h1 class="text-3xl font-bold tracking-tight">Checkout</h1>
+
+        <form class="mt-8 grid gap-8 lg:grid-cols-3" onsubmit="return false">
+            <div class="space-y-8 lg:col-span-2">
+                <!-- Contact -->
+                <section class="rounded-xl border border-neutral-200 p-6">
+                    <h2 class="font-semibold">Contact information</h2>
+                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-1.5"><label class="text-sm font-medium">Full name</label><input placeholder="John Doe" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-sm outline-none focus:border-neutral-900" /></div>
+                        <div class="space-y-1.5"><label class="text-sm font-medium">Email</label><input type="email" placeholder="john@example.com" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-sm outline-none focus:border-neutral-900" /></div>
+                        <div class="space-y-1.5"><label class="text-sm font-medium">Phone</label><input placeholder="+880 1XXX-XXXXXX" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-sm outline-none focus:border-neutral-900" /></div>
+                    </div>
+                </section>
+
+                <!-- Shipping -->
+                <section class="rounded-xl border border-neutral-200 p-6">
+                    <h2 class="font-semibold">Shipping address</h2>
+                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-1.5 sm:col-span-2"><label class="text-sm font-medium">Street address</label><input placeholder="123 Main St" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-sm outline-none focus:border-neutral-900" /></div>
+                        <div class="space-y-1.5"><label class="text-sm font-medium">City</label><input placeholder="Dhaka" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-sm outline-none focus:border-neutral-900" /></div>
+                        <div class="space-y-1.5"><label class="text-sm font-medium">Postal code</label><input placeholder="1207" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-sm outline-none focus:border-neutral-900" /></div>
+                        <div class="space-y-1.5 sm:col-span-2"><label class="text-sm font-medium">Country</label><input placeholder="Bangladesh" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-sm outline-none focus:border-neutral-900" /></div>
+                    </div>
+                </section>
+
+                <!-- Payment -->
+                <section class="rounded-xl border border-neutral-200 p-6">
+                    <h2 class="font-semibold">Payment method</h2>
+                    <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                        <button type="button" class="pay flex items-center gap-2 rounded-lg border-2 border-neutral-900 bg-neutral-100 p-3 text-sm font-medium" data-pay="card"><i data-lucide="credit-card" class="size-4"></i> Card</button>
+                        <button type="button" class="pay flex items-center gap-2 rounded-lg border-2 border-neutral-200 p-3 text-sm font-medium" data-pay="cod"><i data-lucide="truck" class="size-4"></i> Cash on Delivery</button>
+                        <button type="button" class="pay flex items-center gap-2 rounded-lg border-2 border-neutral-200 p-3 text-sm font-medium" data-pay="bank"><i data-lucide="landmark" class="size-4"></i> Bank Transfer</button>
+                    </div>
+                    <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-1.5 sm:col-span-2"><label class="text-sm font-medium">Card number</label><input placeholder="1234 5678 9012 3456" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-sm outline-none focus:border-neutral-900" /></div>
+                        <div class="space-y-1.5"><label class="text-sm font-medium">Expiry</label><input placeholder="MM / YY" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-sm outline-none focus:border-neutral-900" /></div>
+                        <div class="space-y-1.5"><label class="text-sm font-medium">CVC</label><input placeholder="123" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-sm outline-none focus:border-neutral-900" /></div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Summary -->
+            <div>
+                <div class="sticky top-24 rounded-xl border border-neutral-200 p-6">
+                    <h2 class="font-semibold">Your order</h2>
+                    <div id="order-items" class="mt-4 space-y-4"></div>
+                    <div class="my-4 h-px bg-neutral-200"></div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-neutral-500">Subtotal</span><span id="subtotal"></span></div>
+                        <div class="flex justify-between"><span class="text-neutral-500">Shipping</span><span id="shipping"></span></div>
+                        <div class="flex justify-between"><span class="text-neutral-500">Tax (5%)</span><span id="tax"></span></div>
+                    </div>
+                    <div class="my-4 h-px bg-neutral-200"></div>
+                    <div class="flex justify-between text-base font-semibold"><span>Total</span><span id="total"></span></div>
+                    <button class="mt-6 flex w-full items-center justify-center gap-2 rounded-md bg-neutral-900 py-2.5 text-sm font-medium text-white hover:bg-neutral-800"><i data-lucide="lock" class="size-4"></i> Place Order</button>
+                    <a href="cart.html" class="mt-2 block rounded-md py-2 text-center text-sm font-medium hover:bg-neutral-100">Back to cart</a>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <div id="site-footer"></div>
+
+    <script src="assets/shared.js"></script>
+    <script>
+        const cart = [
+            { product: findProduct(1), qty: 1 },
+            { product: findProduct(4), qty: 2 },
+            { product: findProduct(9), qty: 1 },
+        ];
+
+        window.renderPage = function () {
+            document.getElementById('order-items').innerHTML = cart.map((item) => {
+                const p = item.product;
+                return `
+                <div class="flex gap-3">
+                    <div class="relative size-14 shrink-0 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
+                        <img src="${p.image}" class="h-full w-full object-cover" />
+                        <span class="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-neutral-900 text-[10px] font-semibold text-white">${item.qty}</span>
+                    </div>
+                    <div class="flex flex-1 items-center justify-between gap-2">
+                        <p class="line-clamp-2 text-sm">${p.name}</p>
+                        <p class="whitespace-nowrap text-sm font-medium">${formatPrice(p.price * item.qty)}</p>
+                    </div>
+                </div>`;
+            }).join('');
+
+            const subtotal = cart.reduce((s, i) => s + i.product.price * i.qty, 0);
+            const shipping = subtotal > 100 ? 0 : 9.99;
+            const tax = subtotal * 0.05;
+            document.getElementById('subtotal').textContent = formatPrice(subtotal);
+            document.getElementById('shipping').textContent = shipping === 0 ? 'Free' : formatPrice(shipping);
+            document.getElementById('tax').textContent = formatPrice(tax);
+            document.getElementById('total').textContent = formatPrice(subtotal + shipping + tax);
+
+            setTimeout(() => {
+                document.querySelectorAll('.pay').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.pay').forEach((b) => {
+                            b.classList.replace('border-neutral-900', 'border-neutral-200');
+                            b.classList.remove('bg-neutral-100');
+                        });
+                        btn.classList.replace('border-neutral-200', 'border-neutral-900');
+                        btn.classList.add('bg-neutral-100');
+                    });
+                });
+            }, 0);
+        };
+    </script>
+</body>
+</html>

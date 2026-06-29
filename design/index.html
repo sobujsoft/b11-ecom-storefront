@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Home — B11 Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body data-page="home" class="bg-white text-neutral-900 antialiased">
+    <div id="site-header"></div>
+
+    <main>
+        <!-- Hero -->
+        <section class="border-b border-neutral-200 bg-neutral-50">
+            <div class="mx-auto grid max-w-7xl items-center gap-8 px-4 py-12 lg:grid-cols-2 lg:py-20">
+                <div>
+                    <span class="mb-4 inline-flex rounded-full bg-neutral-200 px-2.5 py-0.5 text-xs font-medium">New Season Arrivals</span>
+                    <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">Quality products at <span class="text-neutral-500">honest prices</span></h1>
+                    <p class="mt-5 max-w-md text-lg text-neutral-500">Discover thousands of handpicked items across electronics, fashion, and home essentials — delivered fast.</p>
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        <a href="products.html" class="inline-flex items-center gap-2 rounded-md bg-neutral-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-neutral-800">Shop Now <i data-lucide="arrow-right" class="size-4"></i></a>
+                        <a href="products.html" class="inline-flex items-center gap-2 rounded-md border border-neutral-200 px-6 py-2.5 text-sm font-medium hover:bg-neutral-100">New Arrivals</a>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="aspect-[4/3] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1000&q=80" alt="Featured product" class="h-full w-full object-cover" />
+                    </div>
+                    <div class="absolute bottom-4 left-4 rounded-xl border border-neutral-200 bg-white/95 p-4 shadow-lg backdrop-blur">
+                        <p class="text-xs text-neutral-500">Featured</p>
+                        <p class="font-semibold">Aero Wireless Headphones</p>
+                        <a href="product-detail.html?id=1" class="mt-1 inline-flex items-center gap-1 text-sm font-medium hover:underline">View product <i data-lucide="arrow-right" class="size-3.5"></i></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Perks -->
+        <section class="border-b border-neutral-200">
+            <div class="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-8 lg:grid-cols-4">
+                <div class="flex items-center gap-3"><span class="grid size-11 shrink-0 place-items-center rounded-full bg-neutral-100"><i data-lucide="truck" class="size-5"></i></span><div><p class="text-sm font-semibold">Free Shipping</p><p class="text-xs text-neutral-500">On orders over $100</p></div></div>
+                <div class="flex items-center gap-3"><span class="grid size-11 shrink-0 place-items-center rounded-full bg-neutral-100"><i data-lucide="rotate-ccw" class="size-5"></i></span><div><p class="text-sm font-semibold">30-Day Returns</p><p class="text-xs text-neutral-500">Hassle-free refunds</p></div></div>
+                <div class="flex items-center gap-3"><span class="grid size-11 shrink-0 place-items-center rounded-full bg-neutral-100"><i data-lucide="shield-check" class="size-5"></i></span><div><p class="text-sm font-semibold">Secure Payment</p><p class="text-xs text-neutral-500">100% protected</p></div></div>
+                <div class="flex items-center gap-3"><span class="grid size-11 shrink-0 place-items-center rounded-full bg-neutral-100"><i data-lucide="headphones" class="size-5"></i></span><div><p class="text-sm font-semibold">24/7 Support</p><p class="text-xs text-neutral-500">Always here to help</p></div></div>
+            </div>
+        </section>
+
+        <!-- Categories -->
+        <section class="mx-auto max-w-7xl px-4 py-12">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold tracking-tight">Shop by Category</h2>
+                <p class="mt-1 text-sm text-neutral-500">Find exactly what you're looking for</p>
+            </div>
+            <div id="categories" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5"></div>
+        </section>
+
+        <!-- Featured -->
+        <section class="mx-auto max-w-7xl px-4 py-6">
+            <div class="mb-6 flex items-end justify-between">
+                <h2 class="text-2xl font-bold tracking-tight">Featured Products</h2>
+                <a href="products.html" class="inline-flex items-center gap-1 text-sm font-medium hover:underline">View all <i data-lucide="arrow-right" class="size-4"></i></a>
+            </div>
+            <div id="featured" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"></div>
+        </section>
+
+        <!-- Promo -->
+        <section class="mx-auto max-w-7xl px-4 py-12">
+            <div class="overflow-hidden rounded-2xl bg-neutral-900 px-6 py-12 text-center text-white sm:px-12">
+                <h2 class="text-3xl font-bold">Members save more</h2>
+                <p class="mx-auto mt-3 max-w-lg text-neutral-300">Sign up today and get 10% off your first order plus early access to seasonal sales.</p>
+                <a href="products.html" class="mt-6 inline-flex rounded-md bg-white px-6 py-2.5 text-sm font-medium text-neutral-900 hover:bg-neutral-100">Start shopping</a>
+            </div>
+        </section>
+
+        <!-- New arrivals -->
+        <section class="mx-auto max-w-7xl px-4 py-6">
+            <div class="mb-6 flex items-end justify-between">
+                <h2 class="text-2xl font-bold tracking-tight">New Arrivals</h2>
+                <a href="products.html" class="inline-flex items-center gap-1 text-sm font-medium hover:underline">View all <i data-lucide="arrow-right" class="size-4"></i></a>
+            </div>
+            <div id="latest" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"></div>
+        </section>
+
+        <!-- Popular -->
+        <section class="mx-auto max-w-7xl px-4 py-6 pb-12">
+            <div class="mb-6"><h2 class="text-2xl font-bold tracking-tight">Popular Right Now</h2></div>
+            <div id="popular" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"></div>
+        </section>
+    </main>
+
+    <div id="site-footer"></div>
+
+    <script src="assets/shared.js"></script>
+    <script>
+        window.renderPage = function () {
+            const catImages = {
+                'Electronics': 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=600&q=80',
+                'Fashion': 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=600&q=80',
+                'Home & Living': 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?auto=format&fit=crop&w=600&q=80',
+                'Sports': 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=600&q=80',
+                'Beauty': 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80',
+            };
+            document.getElementById('categories').innerHTML = CATEGORIES.map((c) => `
+                <a href="products.html" class="group relative aspect-square overflow-hidden rounded-xl border border-neutral-200">
+                    <img src="${catImages[c]}" alt="${c}" loading="lazy" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    <div class="absolute inset-0 flex items-end bg-gradient-to-t from-black/70 to-transparent p-4"><span class="text-sm font-semibold text-white">${c}</span></div>
+                </a>`).join('');
+
+            renderGrid('featured', PRODUCTS.slice(0, 4));
+            renderGrid('latest', PRODUCTS.filter((p) => p.latest).slice(0, 4));
+            renderGrid('popular', PRODUCTS.slice(4, 12));
+        };
+    </script>
+</body>
+</html>

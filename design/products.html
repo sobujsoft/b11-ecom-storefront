@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shop — B11 Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body data-page="shop" class="bg-white text-neutral-900 antialiased">
+    <div id="site-header"></div>
+
+    <main class="mx-auto max-w-7xl px-4 py-8">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold tracking-tight">All Products</h1>
+            <p class="mt-1 text-sm text-neutral-500"><span id="count">12</span> products available</p>
+        </div>
+
+        <div class="flex gap-8">
+            <!-- Sidebar filters -->
+            <aside class="hidden w-64 shrink-0 lg:block">
+                <div class="sticky top-24 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-semibold">Filters</h2>
+                        <button id="clear" class="text-xs text-neutral-500 hover:underline">Clear all</button>
+                    </div>
+                    <div>
+                        <h3 class="mb-3 text-sm font-medium">Category</h3>
+                        <div id="cat-filters" class="space-y-2.5"></div>
+                    </div>
+                    <div>
+                        <h3 class="mb-3 text-sm font-medium">Brand</h3>
+                        <div id="brand-filters" class="space-y-2.5"></div>
+                    </div>
+                    <div>
+                        <h3 class="mb-3 text-sm font-medium">Max price: $<span id="price-label">250</span></h3>
+                        <input id="price" type="range" min="0" max="250" step="10" value="250" class="w-full accent-neutral-900" />
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Grid -->
+            <div class="flex-1">
+                <div class="mb-6 flex items-center justify-between gap-3 border-b border-neutral-200 pb-4">
+                    <button class="inline-flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-1.5 text-sm font-medium lg:hidden"><i data-lucide="sliders-horizontal" class="size-4"></i> Filters</button>
+                    <div class="relative ml-auto">
+                        <select id="sort" class="h-9 w-[180px] appearance-none rounded-md border border-neutral-200 bg-white px-3 pr-8 text-sm outline-none focus:border-neutral-900">
+                            <option value="featured">Featured</option>
+                            <option value="newest">Newest</option>
+                            <option value="price-asc">Price: Low to High</option>
+                            <option value="price-desc">Price: High to Low</option>
+                            <option value="rating">Top Rated</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-neutral-400"></i>
+                    </div>
+                </div>
+
+                <div id="chips" class="mb-4 flex flex-wrap gap-2"></div>
+                <div id="grid" class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4"></div>
+                <div id="empty" class="hidden flex-col items-center justify-center rounded-xl border border-dashed border-neutral-300 py-20 text-center">
+                    <p class="font-medium">No products match your filters</p>
+                    <p class="mt-1 text-sm text-neutral-500">Try adjusting or clearing your filters.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+
+    <script src="assets/shared.js"></script>
+    <script>
+        const BRANDS = ['Acme', 'Nimbus', 'Vertex', 'Lumen', 'Aero', 'Pulse'];
+        const state = { categories: [], brands: [], maxPrice: 250, sort: 'featured' };
+
+        function checkbox(id, label, group) {
+            return `<label class="flex items-center gap-2"><input type="checkbox" data-group="${group}" value="${label}" id="${id}" class="size-4 rounded border-neutral-300 accent-neutral-900" /><span class="text-sm text-neutral-500">${label}</span></label>`;
+        }
+
+        function applyAndRender() {
+            let list = PRODUCTS.filter((p) => {
+                if (state.categories.length && !state.categories.includes(p.category)) return false;
+                if (state.brands.length && !state.brands.includes(p.brand)) return false;
+                if (p.price > state.maxPrice) return false;
+                return true;
+            });
+            list = [...list].sort((a, b) => {
+                switch (state.sort) {
+                    case 'price-asc': return a.price - b.price;
+                    case 'price-desc': return b.price - a.price;
+                    case 'rating': return b.rating - a.rating;
+                    case 'newest': return Number(b.latest) - Number(a.latest);
+                    default: return 0;
+                }
+            });
+
+            document.getElementById('count').textContent = list.length;
+            renderGrid('grid', list);
+            document.getElementById('empty').classList.toggle('hidden', list.length > 0);
+            document.getElementById('empty').classList.toggle('flex', list.length === 0);
+
+            const chips = [...state.categories, ...state.brands];
+            document.getElementById('chips').innerHTML = chips.map((c) =>
+                `<span class="inline-flex cursor-pointer items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium">${c} <i data-lucide="x" class="size-3"></i></span>`).join('');
+
+            window.lucide.createIcons();
+        }
+
+        window.renderPage = function () {
+            document.getElementById('cat-filters').innerHTML = CATEGORIES.map((c, i) => checkbox('cat' + i, c, 'categories')).join('');
+            document.getElementById('brand-filters').innerHTML = BRANDS.map((b, i) => checkbox('brand' + i, b, 'brands')).join('');
+
+            document.querySelectorAll('input[type=checkbox]').forEach((el) => {
+                el.addEventListener('change', () => {
+                    const group = el.dataset.group;
+                    state[group] = el.checked
+                        ? [...state[group], el.value]
+                        : state[group].filter((v) => v !== el.value);
+                    applyAndRender();
+                });
+            });
+            document.getElementById('price').addEventListener('input', (e) => {
+                state.maxPrice = Number(e.target.value);
+                document.getElementById('price-label').textContent = e.target.value;
+                applyAndRender();
+            });
+            document.getElementById('sort').addEventListener('change', (e) => {
+                state.sort = e.target.value;
+                applyAndRender();
+            });
+            document.getElementById('clear').addEventListener('click', () => {
+                state.categories = []; state.brands = []; state.maxPrice = 250;
+                document.querySelectorAll('input[type=checkbox]').forEach((el) => (el.checked = false));
+                document.getElementById('price').value = 250;
+                document.getElementById('price-label').textContent = '250';
+                applyAndRender();
+            });
+
+            applyAndRender();
+        };
+    </script>
+</body>
+</html>
