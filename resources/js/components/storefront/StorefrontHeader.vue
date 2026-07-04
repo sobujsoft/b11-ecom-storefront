@@ -11,6 +11,7 @@ import {
     User,
 } from '@lucide/vue';
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,13 +33,19 @@ import {
 } from '@/components/ui/sheet';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { useShopAuth } from '@/composables/useShopAuth';
+import { useCart } from '@/composables/useCart';
+import { useWishlist } from '@/composables/useWishlist';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
 import { categories, shopRoutes } from '@/lib/shop';
 import { cn } from '@/lib/utils';
 
 const { user, isLoggedIn, clearAuth } = useShopAuth();
+const { itemCount } = useCart();
+const { itemCount: wishlistCount } = useWishlist();
 const { isCurrentUrl } = useCurrentUrl();
+
+const showAccountMenu = computed(() => isLoggedIn.value && user.value !== null);
 
 const navItems = [
     { title: 'Home', href: shopRoutes.home() },
@@ -111,7 +118,7 @@ function logout() {
 
                         <!-- Mobile auth links -->
                         <div class="mt-6 border-t pt-4">
-                            <template v-if="isLoggedIn && user">
+                            <template v-if="showAccountMenu && user">
                                 <p class="px-3 text-sm font-medium">{{ user.name }}</p>
                                 <p class="px-3 text-xs text-muted-foreground">{{ user.email }}</p>
                                 <button
@@ -121,7 +128,7 @@ function logout() {
                                     Log out
                                 </button>
                             </template>
-                            <template v-else>
+                            <template v-if="!showAccountMenu">
                                 <Link
                                     :href="shopRoutes.login()"
                                     class="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
@@ -178,17 +185,29 @@ function logout() {
                 <Button variant="ghost" size="icon" as-child class="relative" aria-label="Wishlist">
                     <Link :href="shopRoutes.wishlist()">
                         <Heart class="size-5" />
+                        <Badge
+                            v-if="isLoggedIn && wishlistCount > 0"
+                            class="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full p-0 text-[10px]"
+                        >
+                            {{ wishlistCount > 99 ? '99+' : wishlistCount }}
+                        </Badge>
                     </Link>
                 </Button>
 
                 <Button variant="ghost" size="icon" as-child class="relative" aria-label="Cart">
                     <Link :href="shopRoutes.cart()">
                         <ShoppingCart class="size-5" />
+                        <Badge
+                            v-if="isLoggedIn && itemCount > 0"
+                            class="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full p-0 text-[10px]"
+                        >
+                            {{ itemCount > 99 ? '99+' : itemCount }}
+                        </Badge>
                     </Link>
                 </Button>
 
                 <!-- Logged-in user dropdown -->
-                <DropdownMenu v-if="isLoggedIn && user">
+                <DropdownMenu v-if="showAccountMenu && user">
                     <DropdownMenuTrigger :as-child="true">
                         <Button variant="ghost" size="icon" class="rounded-full">
                             <Avatar class="size-8">
@@ -228,7 +247,7 @@ function logout() {
                 </DropdownMenu>
 
                 <!-- Guest actions -->
-                <template v-else>
+                <template v-if="!showAccountMenu">
                     <Button variant="ghost" size="icon" as-child aria-label="Sign in">
                         <Link :href="shopRoutes.login()">
                             <User class="size-5" />

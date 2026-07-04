@@ -338,6 +338,25 @@ export const shopRoutes = {
     cart: () => '/cart',
     wishlist: () => '/wishlist',
     checkout: () => '/checkout',
+    paymentSuccess: (orderId?: number) =>
+        orderId
+            ? `/payment/success?order_id=${orderId}`
+            : '/payment/success',
+    paymentFailed: (orderId?: number) =>
+        orderId
+            ? `/payment/failed?order_id=${orderId}`
+            : '/payment/failed',
+    paymentCancel: (orderId?: number) =>
+        orderId
+            ? `/payment/cancel?order_id=${orderId}`
+            : '/payment/cancel',
+    paymentResult: (status: string, orderId?: number) => {
+        const params = new URLSearchParams({ status });
+        if (orderId) {
+            params.set('order_id', String(orderId));
+        }
+        return `/payment/result?${params.toString()}`;
+    },
     orders: () => '/orders',
     order: (id: number) => `/orders/${id}`,
     login: () => '/account/login',

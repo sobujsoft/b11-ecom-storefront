@@ -46,6 +46,20 @@ export type OrderItem = {
     price: number;
 };
 
+export type PaymentMethod = 'cod' | 'sslcommerz';
+
+export type Payment = {
+    id: number;
+    order_id: number;
+    transaction_id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    created_at: string;
+};
+
+export type PaymentResultStatus = 'success' | 'failed' | 'cancelled';
+
 export type OrderStatus =
     'pending' | 'processing' | 'shipped' | 'completed' | 'cancelled';
 export type PaymentStatus = 'unpaid' | 'paid' | 'refunded';

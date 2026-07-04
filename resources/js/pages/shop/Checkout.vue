@@ -1,30 +1,178 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { CreditCard, Landmark, Lock, Truck } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { CreditCard, Lock, ShoppingCart, Truck } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { cartItems, formatPrice, shopRoutes } from '@/lib/shop';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCart } from '@/composables/useCart';
+import { useOrders } from '@/composables/useOrders';
+import { usePayments } from '@/composables/usePayments';
+import { useShopAuth } from '@/composables/useShopAuth';
+import { ApiError } from '@/lib/api';
+import { formatPrice, shopRoutes } from '@/lib/shop';
 import { cn } from '@/lib/utils';
+import type { PaymentMethod } from '@/types';
+import { toast } from 'vue-sonner';
+
+const { isLoggedIn, user } = useShopAuth();
+const { items, loading: cartLoading, clearCart } = useCart();
+const { createOrder } = useOrders();
+const { initiatePayment } = usePayments();
+
+const name = ref(user.value?.name ?? '');
+const email = ref(user.value?.email ?? '');
+const phone = ref('');
+const street = ref('');
+const city = ref('');
+const zip = ref('');
+const country = ref('Bangladesh');
+
+watch(user, (currentUser) => {
+    if (currentUser) {
+        name.value = currentUser.name;
+        email.value = currentUser.email;
+    }
+});
+
+const paymentMethod = ref<PaymentMethod>('cod');
+const placingOrder = ref(false);
+const fieldErrors = ref<Record<string, string>>({});
+const generalError = ref<string | null>(null);
+
+const paymentOptions = [
+    { key: 'cod' as const, label: 'Cash on Delivery', icon: Truck },
+    { key: 'sslcommerz' as const, label: 'SSL Commerz', icon: CreditCard },
+];
 
 const subtotal = computed(() =>
-    cartItems.reduce(
+    items.value.reduce(
         (sum, item) => sum + item.product.price * item.quantity,
         0,
     ),
 );
-const shipping = computed(() => (subtotal.value > 100 ? 0 : 9.99));
+const shipping = computed(() =>
+    subtotal.value > 100 || subtotal.value === 0 ? 0 : 9.99,
+);
 const tax = computed(() => subtotal.value * 0.05);
 const total = computed(() => subtotal.value + shipping.value + tax.value);
 
-const paymentMethod = ref<'card' | 'cod' | 'bank'>('card');
-const paymentOptions = [
-    { key: 'card', label: 'Credit / Debit Card', icon: CreditCard },
-    { key: 'cod', label: 'Cash on Delivery', icon: Truck },
-    { key: 'bank', label: 'Bank Transfer', icon: Landmark },
-] as const;
+function buildShippingAddress(): string {
+    const parts = [
+        street.value.trim(),
+        city.value.trim(),
+        zip.value.trim(),
+        country.value.trim(),
+    ].filter(Boolean);
+
+    return parts.join(', ');
+}
+
+function validate(): boolean {
+    const errors: Record<string, string> = {};
+
+    if (!name.value.trim()) {
+        errors.name = 'Full name is required.';
+    }
+    if (!email.value.trim()) {
+        errors.email = 'Email is required.';
+    }
+    if (!phone.value.trim()) {
+        errors.phone = 'Phone number is required.';
+    }
+    if (!street.value.trim()) {
+        errors.street = 'Street address is required.';
+    }
+    if (!city.value.trim()) {
+        errors.city = 'City is required.';
+    }
+
+    fieldErrors.value = errors;
+    return Object.keys(errors).length === 0;
+}
+
+const placeOrderLabel = computed(() => {
+    if (placingOrder.value) {
+        return paymentMethod.value === 'sslcommerz'
+            ? 'Redirecting to payment…'
+            : 'Placing order…';
+    }
+
+    return paymentMethod.value === 'sslcommerz'
+        ? 'Pay with SSL Commerz'
+        : 'Place Order (COD)';
+});
+
+async function placeOrder() {
+    generalError.value = null;
+
+    if (!isLoggedIn.value) {
+        router.visit(shopRoutes.login());
+        return;
+    }
+
+    if (!items.value.length) {
+        toast.error('Your cart is empty.');
+        return;
+    }
+
+    if (!validate()) {
+        return;
+    }
+
+    placingOrder.value = true;
+
+    try {
+        const orderPayload = {
+            total_amount: total.value,
+            shipping_address: buildShippingAddress(),
+            items: items.value.map((item) => ({
+                product_id: item.product.id,
+                quantity: item.quantity,
+                price: item.product.price,
+            })),
+        };
+
+        const order = await createOrder(orderPayload);
+
+        if (paymentMethod.value === 'sslcommerz') {
+            sessionStorage.setItem(
+                'pending_payment_order_id',
+                String(order.id),
+            );
+
+            const { gatewayUrl } = await initiatePayment(order.id);
+            await clearCart();
+
+            window.location.href = gatewayUrl;
+            return;
+        }
+
+        await clearCart();
+
+        toast.success('Order placed successfully!', {
+            description: `Order #${order.id} · Cash on Delivery`,
+        });
+
+        router.visit(shopRoutes.order(order.id));
+    } catch (e) {
+        if (e instanceof ApiError && e.errors) {
+            const flat: Record<string, string> = {};
+            for (const [field, msgs] of Object.entries(e.errors)) {
+                flat[field] = msgs[0];
+            }
+            fieldErrors.value = flat;
+        } else {
+            generalError.value =
+                e instanceof Error ? e.message : 'Failed to place order.';
+            toast.error(generalError.value);
+        }
+    } finally {
+        placingOrder.value = false;
+    }
+}
 </script>
 
 <template>
@@ -33,28 +181,102 @@ const paymentOptions = [
     <div class="mx-auto max-w-7xl px-4 py-8">
         <h1 class="text-3xl font-bold tracking-tight">Checkout</h1>
 
-        <form class="mt-8 grid gap-8 lg:grid-cols-3" @submit.prevent>
+        <!-- Not logged in -->
+        <div
+            v-if="!isLoggedIn"
+            class="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center"
+        >
+            <p class="text-lg font-semibold">Sign in to checkout</p>
+            <p class="mt-1 text-sm text-muted-foreground">
+                You need an account to place an order.
+            </p>
+            <Button class="mt-6" as-child>
+                <Link :href="shopRoutes.login()">Sign in</Link>
+            </Button>
+        </div>
+
+        <!-- Empty cart -->
+        <div
+            v-else-if="!cartLoading && !items.length"
+            class="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center"
+        >
+            <span
+                class="flex size-16 items-center justify-center rounded-full bg-muted"
+            >
+                <ShoppingCart class="size-7 text-muted-foreground" />
+            </span>
+            <p class="mt-4 text-lg font-semibold">Your cart is empty</p>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Add products before checking out.
+            </p>
+            <Button class="mt-6" as-child>
+                <Link :href="shopRoutes.products()">Browse products</Link>
+            </Button>
+        </div>
+
+        <form
+            v-else
+            class="mt-8 grid gap-8 lg:grid-cols-3"
+            @submit.prevent="placeOrder"
+        >
             <!-- Left: forms -->
             <div class="space-y-8 lg:col-span-2">
+                <div
+                    v-if="generalError"
+                    class="rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+                >
+                    {{ generalError }}
+                </div>
+
                 <!-- Contact -->
                 <section class="rounded-xl border p-6">
                     <h2 class="font-semibold">Contact information</h2>
                     <div class="mt-4 grid gap-4 sm:grid-cols-2">
                         <div class="space-y-1.5">
                             <Label for="name">Full name</Label>
-                            <Input id="name" placeholder="John Doe" />
+                            <Input
+                                id="name"
+                                v-model="name"
+                                placeholder="John Doe"
+                                :aria-invalid="!!fieldErrors.name"
+                            />
+                            <p
+                                v-if="fieldErrors.name"
+                                class="text-xs text-destructive"
+                            >
+                                {{ fieldErrors.name }}
+                            </p>
                         </div>
                         <div class="space-y-1.5">
                             <Label for="email">Email</Label>
                             <Input
                                 id="email"
+                                v-model="email"
                                 type="email"
                                 placeholder="john@example.com"
+                                :aria-invalid="!!fieldErrors.email"
                             />
+                            <p
+                                v-if="fieldErrors.email"
+                                class="text-xs text-destructive"
+                            >
+                                {{ fieldErrors.email }}
+                            </p>
                         </div>
                         <div class="space-y-1.5">
                             <Label for="phone">Phone</Label>
-                            <Input id="phone" placeholder="+880 1XXX-XXXXXX" />
+                            <Input
+                                id="phone"
+                                v-model="phone"
+                                placeholder="+880 1XXX-XXXXXX"
+                                :aria-invalid="!!fieldErrors.phone"
+                            />
+                            <p
+                                v-if="fieldErrors.phone"
+                                class="text-xs text-destructive"
+                            >
+                                {{ fieldErrors.phone }}
+                            </p>
                         </div>
                     </div>
                 </section>
@@ -65,19 +287,49 @@ const paymentOptions = [
                     <div class="mt-4 grid gap-4 sm:grid-cols-2">
                         <div class="space-y-1.5 sm:col-span-2">
                             <Label for="street">Street address</Label>
-                            <Input id="street" placeholder="123 Main St" />
+                            <Input
+                                id="street"
+                                v-model="street"
+                                placeholder="123 Main St"
+                                :aria-invalid="!!fieldErrors.street"
+                            />
+                            <p
+                                v-if="fieldErrors.street"
+                                class="text-xs text-destructive"
+                            >
+                                {{ fieldErrors.street }}
+                            </p>
                         </div>
                         <div class="space-y-1.5">
                             <Label for="city">City</Label>
-                            <Input id="city" placeholder="Dhaka" />
+                            <Input
+                                id="city"
+                                v-model="city"
+                                placeholder="Dhaka"
+                                :aria-invalid="!!fieldErrors.city"
+                            />
+                            <p
+                                v-if="fieldErrors.city"
+                                class="text-xs text-destructive"
+                            >
+                                {{ fieldErrors.city }}
+                            </p>
                         </div>
                         <div class="space-y-1.5">
                             <Label for="zip">Postal code</Label>
-                            <Input id="zip" placeholder="1207" />
+                            <Input
+                                id="zip"
+                                v-model="zip"
+                                placeholder="1207"
+                            />
                         </div>
                         <div class="space-y-1.5 sm:col-span-2">
                             <Label for="country">Country</Label>
-                            <Input id="country" placeholder="Bangladesh" />
+                            <Input
+                                id="country"
+                                v-model="country"
+                                placeholder="Bangladesh"
+                            />
                         </div>
                     </div>
                 </section>
@@ -85,55 +337,40 @@ const paymentOptions = [
                 <!-- Payment -->
                 <section class="rounded-xl border p-6">
                     <h2 class="font-semibold">Payment method</h2>
-                    <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
                         <button
                             v-for="option in paymentOptions"
                             :key="option.key"
                             type="button"
                             :class="
                                 cn(
-                                    'flex items-center gap-2 rounded-lg border-2 p-3 text-sm font-medium transition-colors',
+                                    'flex items-center gap-2 rounded-lg border-2 p-4 text-sm font-medium transition-colors',
                                     paymentMethod === option.key
                                         ? 'border-primary bg-accent'
-                                        : 'border-border hover:border-foreground/30',
+                                        : 'border-border hover:border-foreground/30 hover:bg-muted/50',
                                 )
                             "
                             @click="paymentMethod = option.key"
                         >
-                            <component :is="option.icon" class="size-4" />
-                            {{ option.label }}
+                            <component :is="option.icon" class="size-4 shrink-0" />
+                            <span class="text-left">{{ option.label }}</span>
                         </button>
                     </div>
 
-                    <div
-                        v-if="paymentMethod === 'card'"
-                        class="mt-5 grid gap-4 sm:grid-cols-2"
-                    >
-                        <div class="space-y-1.5 sm:col-span-2">
-                            <Label for="card">Card number</Label>
-                            <Input
-                                id="card"
-                                placeholder="1234 5678 9012 3456"
-                            />
-                        </div>
-                        <div class="space-y-1.5">
-                            <Label for="exp">Expiry</Label>
-                            <Input id="exp" placeholder="MM / YY" />
-                        </div>
-                        <div class="space-y-1.5">
-                            <Label for="cvc">CVC</Label>
-                            <Input id="cvc" placeholder="123" />
-                        </div>
-                    </div>
                     <p
-                        v-else-if="paymentMethod === 'cod'"
-                        class="mt-4 text-sm text-muted-foreground"
+                        v-if="paymentMethod === 'cod'"
+                        class="mt-4 rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground"
                     >
-                        Pay with cash when your order is delivered.
+                        Pay with cash when your order is delivered. No online
+                        payment required.
                     </p>
-                    <p v-else class="mt-4 text-sm text-muted-foreground">
-                        Transfer details will be emailed after you place the
-                        order.
+                    <p
+                        v-else
+                        class="mt-4 rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground"
+                    >
+                        Pay securely online via SSL Commerz using bKash, Nagad,
+                        cards, or mobile banking. You will be redirected to the
+                        payment gateway to complete your purchase.
                     </p>
                 </section>
             </div>
@@ -142,9 +379,18 @@ const paymentOptions = [
             <div>
                 <div class="sticky top-24 rounded-xl border p-6">
                     <h2 class="font-semibold">Your order</h2>
-                    <div class="mt-4 space-y-4">
+
+                    <div v-if="cartLoading" class="mt-4 space-y-4">
+                        <Skeleton
+                            v-for="n in 2"
+                            :key="n"
+                            class="h-14 w-full rounded-lg"
+                        />
+                    </div>
+
+                    <div v-else class="mt-4 space-y-4">
                         <div
-                            v-for="item in cartItems"
+                            v-for="item in items"
                             :key="item.id"
                             class="flex gap-3"
                         >
@@ -158,8 +404,9 @@ const paymentOptions = [
                                 />
                                 <span
                                     class="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
-                                    >{{ item.quantity }}</span
                                 >
+                                    {{ item.quantity }}
+                                </span>
                             </div>
                             <div
                                 class="flex flex-1 items-center justify-between gap-2"
@@ -167,9 +414,7 @@ const paymentOptions = [
                                 <p class="line-clamp-2 text-sm">
                                     {{ item.product.name }}
                                 </p>
-                                <p
-                                    class="text-sm font-medium whitespace-nowrap"
-                                >
+                                <p class="text-sm font-medium whitespace-nowrap">
                                     {{
                                         formatPrice(
                                             item.product.price * item.quantity,
@@ -203,9 +448,14 @@ const paymentOptions = [
                         <span>{{ formatPrice(total) }}</span>
                     </div>
 
-                    <Button size="lg" type="submit" class="mt-6 w-full">
+                    <Button
+                        size="lg"
+                        type="submit"
+                        class="mt-6 w-full"
+                        :disabled="placingOrder || cartLoading || !items.length"
+                    >
                         <Lock class="size-4" />
-                        Place Order
+                        {{ placeOrderLabel }}
                     </Button>
                     <Button variant="ghost" class="mt-2 w-full" as-child>
                         <Link :href="shopRoutes.cart()">Back to cart</Link>
