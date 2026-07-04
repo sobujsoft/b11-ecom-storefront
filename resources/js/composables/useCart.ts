@@ -206,6 +206,24 @@ export function useCart() {
         }
     }
 
+    async function clearCart(): Promise<void> {
+        if (!token.value) {
+            return;
+        }
+
+        try {
+            await apiFetch('/cart', {
+                method: 'DELETE',
+                token: token.value,
+            });
+            clearLocalCart();
+        } catch (e) {
+            toast.error(
+                e instanceof Error ? e.message : 'Failed to clear cart',
+            );
+        }
+    }
+
     async function removeItem(cartId: number): Promise<void> {
         if (!token.value) {
             return;
@@ -246,5 +264,6 @@ export function useCart() {
         addToCart,
         updateQuantity,
         removeItem,
+        clearCart,
     };
 }

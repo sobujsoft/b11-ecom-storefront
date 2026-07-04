@@ -1,9 +1,36 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { ChevronRight, Package } from '@lucide/vue';
+import { onMounted, ref } from 'vue';
 import OrderStatusBadge from '@/components/storefront/OrderStatusBadge.vue';
 import { Button } from '@/components/ui/button';
-import { formatPrice, orders, shopRoutes } from '@/lib/shop';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useOrders } from '@/composables/useOrders';
+import { useShopAuth } from '@/composables/useShopAuth';
+import { formatPrice, shopRoutes } from '@/lib/shop';
+import type { Order } from '@/types';
+
+const { isLoggedIn } = useShopAuth();
+const { fetchOrders } = useOrders();
+
+const orders = ref<Order[]>([]);
+const loading = ref(true);
+const error = ref<string | null>(null);
+
+onMounted(async () => {
+    if (!isLoggedIn.value) {
+        loading.value = false;
+        return;
+    }
+
+    try {
+        orders.value = await fetchOrders();
+    } catch (e) {
+        error.value = e instanceof Error ? e.message : 'Failed to load orders';
+    } finally {
+        loading.value = false;
+    }
+});
 
 function formatDate(value: string): string {
     return new Date(value).toLocaleDateString('en-US', {
@@ -23,7 +50,37 @@ function formatDate(value: string): string {
             Track and manage your purchases
         </p>
 
-        <div v-if="orders.length" class="mt-8 space-y-4">
+        <!-- Not logged in -->
+        <div
+            v-if="!isLoggedIn"
+            class="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center"
+        >
+            <p class="text-lg font-semibold">Sign in to view your orders</p>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Your order history is linked to your account.
+            </p>
+            <Button class="mt-6" as-child>
+                <Link :href="shopRoutes.login()">Sign in</Link>
+            </Button>
+        </div>
+
+        <!-- Error -->
+        <div
+            v-else-if="error"
+            class="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center"
+        >
+            <p class="font-medium text-destructive">{{ error }}</p>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Make sure the backend server is running.
+            </p>
+        </div>
+
+        <!-- Loading -->
+        <div v-else-if="loading" class="mt-8 space-y-4">
+            <Skeleton v-for="n in 3" :key="n" class="h-36 w-full rounded-xl" />
+        </div>
+
+        <div v-else-if="orders.length" class="mt-8 space-y-4">
             <div
                 v-for="order in orders"
                 :key="order.id"
