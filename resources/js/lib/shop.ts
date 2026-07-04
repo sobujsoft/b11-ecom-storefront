@@ -338,6 +338,13 @@ export const shopRoutes = {
     cart: () => '/cart',
     wishlist: () => '/wishlist',
     checkout: () => '/checkout',
+    paymentResult: (status: string, orderId?: number) => {
+        const params = new URLSearchParams({ status });
+        if (orderId) {
+            params.set('order_id', String(orderId));
+        }
+        return `/payment/result?${params.toString()}`;
+    },
     orders: () => '/orders',
     order: (id: number) => `/orders/${id}`,
     login: () => '/account/login',

@@ -21,6 +21,7 @@ Route::inertia('products/{product}', 'shop/ProductDetail')->name('products.show'
 Route::inertia('cart', 'shop/Cart')->name('cart.index');
 Route::inertia('wishlist', 'shop/Wishlist')->name('wishlist.index');
 Route::inertia('checkout', 'shop/Checkout')->name('checkout');
+Route::inertia('payment/result', 'shop/PaymentResult')->name('payment.result');
 
 Route::inertia('orders', 'shop/Orders')->name('orders.index');
 Route::inertia('orders/{order}', 'shop/OrderDetail')->name('orders.show');

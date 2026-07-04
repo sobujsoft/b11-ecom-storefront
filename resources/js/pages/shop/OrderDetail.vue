@@ -211,7 +211,13 @@ function formatDate(value: string): string {
                     <div class="rounded-xl border p-5">
                         <h2 class="font-semibold">Payment summary</h2>
                         <p class="mt-1 text-xs text-muted-foreground">
-                            Cash on Delivery
+                            {{
+                                order.payment_status === 'paid'
+                                    ? 'Paid via SSL Commerz'
+                                    : order.payment_status === 'unpaid'
+                                      ? 'Payment pending'
+                                      : order.payment_status
+                            }}
                         </p>
                         <div class="mt-3 space-y-2 text-sm">
                             <div class="flex justify-between">

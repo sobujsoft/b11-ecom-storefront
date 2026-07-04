@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
 		"name": "Auth Laravel Backend API",
-		"description": "Postman collection for the Laravel Sanctum auth & e-commerce API.\n\n## Setup\n1. Start the server: `php artisan serve`\n2. Run **Auth → Login** or **Auth → Register** — the token is saved automatically to the `token` collection variable.\n3. Protected routes use Bearer auth via `{{token}}`.\n\n## Variables\n- `base_url` — default `http://localhost:8000/api`\n- `token` — set automatically after login/register\n- `product_id`, `cart_id`, `review_id`, `wishlist_id`, `order_id` — update after creating resources",
+		"description": "Postman collection for the Laravel Sanctum auth & e-commerce API.\n\n## Setup\n1. Start the server: `php artisan serve`\n2. Run **Auth → Login** or **Auth → Register** — the token is saved automatically to the `token` collection variable.\n3. Protected routes use Bearer auth via `{{token}}`.\n\n## Payment flow\n1. **Orders → Create Order** — saves `order_id`\n2. **Payments → Initiate Payment** — saves `payment_id`, `transaction_id`, and `gateway_url`\n3. Open `gateway_url` in a browser to complete payment on SSL Commerz sandbox\n4. SSL Commerz calls the callback routes automatically (see **SSL Commerz Callbacks** folder for reference)\n\n## Variables\n- `base_url` — default `http://localhost:8000/api`\n- `token` — set automatically after login/register\n- `product_id`, `cart_id`, `review_id`, `wishlist_id`, `order_id`, `payment_id`, `transaction_id`, `gateway_url` — update after creating resources",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -33,6 +33,18 @@
 		{
 			"key": "order_id",
 			"value": "1"
+		},
+		{
+			"key": "payment_id",
+			"value": "1"
+		},
+		{
+			"key": "transaction_id",
+			"value": "TXN-1-EXAMPLE"
+		},
+		{
+			"key": "gateway_url",
+			"value": ""
 		}
 	],
 	"item": [
@@ -1062,6 +1074,402 @@
 							"path": ["orders", "{{order_id}}"]
 						},
 						"description": "Delete an order."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "List Payments",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/payments",
+							"host": ["{{base_url}}"],
+							"path": ["payments"]
+						},
+						"description": "Get all payments for the authenticated user."
+					},
+					"response": []
+				},
+				{
+					"name": "Initiate Payment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const json = pm.response.json();",
+									"    if (json.payment && json.payment.id) {",
+									"        pm.collectionVariables.set('payment_id', json.payment.id);",
+									"    }",
+									"    if (json.payment && json.payment.transaction_id) {",
+									"        pm.collectionVariables.set('transaction_id', json.payment.transaction_id);",
+									"    }",
+									"    if (json.gateway_url) {",
+									"        pm.collectionVariables.set('gateway_url', json.gateway_url);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"order_id\": {{order_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/payments",
+							"host": ["{{base_url}}"],
+							"path": ["payments"]
+						},
+						"description": "Initiate an SSL Commerz payment for an unpaid order. Returns `gateway_url` — open it in a browser to complete payment. Saves `payment_id`, `transaction_id`, and `gateway_url` to collection variables."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/payments/{{payment_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["payments", "{{payment_id}}"]
+						},
+						"description": "Get a single payment with order details."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "SSL Commerz Callbacks",
+			"description": "These routes are called by SSL Commerz after payment. They are public (no Bearer token). Requests use `application/x-www-form-urlencoded` as SSL Commerz sends form data.\n\n**Note:** Manual testing will fail hash verification unless you use the exact payload SSL Commerz sends. Use these requests as reference only — real callbacks happen automatically after completing payment on the gateway.",
+			"item": [
+				{
+					"name": "Payment Success Callback",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "tran_id",
+									"value": "{{transaction_id}}",
+									"description": "Must match the payment transaction_id",
+									"type": "text"
+								},
+								{
+									"key": "val_id",
+									"value": "24070412345678901234567890",
+									"type": "text"
+								},
+								{
+									"key": "amount",
+									"value": "199.98",
+									"type": "text"
+								},
+								{
+									"key": "store_amount",
+									"value": "199.98",
+									"type": "text"
+								},
+								{
+									"key": "currency",
+									"value": "BDT",
+									"type": "text"
+								},
+								{
+									"key": "bank_tran_id",
+									"value": "24070412345678901234567890",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "VALID",
+									"type": "text"
+								},
+								{
+									"key": "card_type",
+									"value": "VISA-Dutch Bangla",
+									"type": "text"
+								},
+								{
+									"key": "card_no",
+									"value": "421XXXXXXXXXX0051",
+									"type": "text"
+								},
+								{
+									"key": "card_issuer",
+									"value": "BRAC BANK",
+									"type": "text"
+								},
+								{
+									"key": "card_brand",
+									"value": "VISA",
+									"type": "text"
+								},
+								{
+									"key": "risk_level",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "risk_title",
+									"value": "Safe",
+									"type": "text"
+								},
+								{
+									"key": "verify_sign",
+									"value": "REPLACE_WITH_SSLC_VERIFY_SIGN",
+									"description": "Generated by SSL Commerz — required for hash verification",
+									"type": "text"
+								},
+								{
+									"key": "verify_key",
+									"value": "amount,bank_tran_id,base_fair,card_brand,card_issuer,card_no,card_type,currency,currency_amount,currency_rate,currency_type,risk_level,risk_title,status,store_amount,store_id,tran_date,tran_id,val_id,value_a,value_b,value_c,value_d",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/sslcommerz/success",
+							"host": ["{{base_url}}"],
+							"path": ["sslcommerz", "success"]
+						},
+						"description": "Called by SSL Commerz when payment succeeds. Validates hash and payment, then marks order as paid."
+					},
+					"response": []
+				},
+				{
+					"name": "Payment Failure Callback",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "tran_id",
+									"value": "{{transaction_id}}",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "FAILED",
+									"type": "text"
+								},
+								{
+									"key": "error",
+									"value": "Payment failed",
+									"type": "text"
+								},
+								{
+									"key": "verify_sign",
+									"value": "REPLACE_WITH_SSLC_VERIFY_SIGN",
+									"type": "text"
+								},
+								{
+									"key": "verify_key",
+									"value": "amount,bank_tran_id,base_fair,card_brand,card_issuer,card_no,card_type,currency,currency_amount,currency_rate,currency_type,risk_level,risk_title,status,store_amount,store_id,tran_date,tran_id,val_id,value_a,value_b,value_c,value_d",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/sslcommerz/failure",
+							"host": ["{{base_url}}"],
+							"path": ["sslcommerz", "failure"]
+						},
+						"description": "Called by SSL Commerz when payment fails."
+					},
+					"response": []
+				},
+				{
+					"name": "Payment Cancel Callback",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "tran_id",
+									"value": "{{transaction_id}}",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "CANCELLED",
+									"type": "text"
+								},
+								{
+									"key": "error",
+									"value": "Payment cancelled by user",
+									"type": "text"
+								},
+								{
+									"key": "verify_sign",
+									"value": "REPLACE_WITH_SSLC_VERIFY_SIGN",
+									"type": "text"
+								},
+								{
+									"key": "verify_key",
+									"value": "amount,bank_tran_id,base_fair,card_brand,card_issuer,card_no,card_type,currency,currency_amount,currency_rate,currency_type,risk_level,risk_title,status,store_amount,store_id,tran_date,tran_id,val_id,value_a,value_b,value_c,value_d",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/sslcommerz/cancel",
+							"host": ["{{base_url}}"],
+							"path": ["sslcommerz", "cancel"]
+						},
+						"description": "Called by SSL Commerz when the user cancels payment."
+					},
+					"response": []
+				},
+				{
+					"name": "IPN Callback",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "tran_id",
+									"value": "{{transaction_id}}",
+									"type": "text"
+								},
+								{
+									"key": "val_id",
+									"value": "24070412345678901234567890",
+									"type": "text"
+								},
+								{
+									"key": "amount",
+									"value": "199.98",
+									"type": "text"
+								},
+								{
+									"key": "store_amount",
+									"value": "199.98",
+									"type": "text"
+								},
+								{
+									"key": "currency",
+									"value": "BDT",
+									"type": "text"
+								},
+								{
+									"key": "bank_tran_id",
+									"value": "24070412345678901234567890",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "VALID",
+									"type": "text"
+								},
+								{
+									"key": "verify_sign",
+									"value": "REPLACE_WITH_SSLC_VERIFY_SIGN",
+									"type": "text"
+								},
+								{
+									"key": "verify_key",
+									"value": "amount,bank_tran_id,base_fair,card_brand,card_issuer,card_no,card_type,currency,currency_amount,currency_rate,currency_type,risk_level,risk_title,status,store_amount,store_id,tran_date,tran_id,val_id,value_a,value_b,value_c,value_d",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/sslcommerz/ipn",
+							"host": ["{{base_url}}"],
+							"path": ["sslcommerz", "ipn"]
+						},
+						"description": "Instant Payment Notification (IPN) from SSL Commerz. Server-to-server callback for payment confirmation."
 					},
 					"response": []
 				}

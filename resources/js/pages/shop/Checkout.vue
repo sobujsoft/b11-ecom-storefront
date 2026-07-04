@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/composables/useCart';
 import { useOrders } from '@/composables/useOrders';
+import { usePayments } from '@/composables/usePayments';
 import { useShopAuth } from '@/composables/useShopAuth';
 import { ApiError } from '@/lib/api';
 import { formatPrice, shopRoutes } from '@/lib/shop';
@@ -19,6 +20,7 @@ import { toast } from 'vue-sonner';
 const { isLoggedIn, user } = useShopAuth();
 const { items, loading: cartLoading, clearCart } = useCart();
 const { createOrder } = useOrders();
+const { initiatePayment } = usePayments();
 
 const name = ref(user.value?.name ?? '');
 const email = ref(user.value?.email ?? '');
@@ -42,12 +44,7 @@ const generalError = ref<string | null>(null);
 
 const paymentOptions = [
     { key: 'cod' as const, label: 'Cash on Delivery', icon: Truck },
-    {
-        key: 'sslcommerz' as const,
-        label: 'SSL Commerz',
-        icon: CreditCard,
-        disabled: true,
-    },
+    { key: 'sslcommerz' as const, label: 'SSL Commerz', icon: CreditCard },
 ];
 
 const subtotal = computed(() =>
@@ -96,6 +93,18 @@ function validate(): boolean {
     return Object.keys(errors).length === 0;
 }
 
+const placeOrderLabel = computed(() => {
+    if (placingOrder.value) {
+        return paymentMethod.value === 'sslcommerz'
+            ? 'Redirecting to payment…'
+            : 'Placing order…';
+    }
+
+    return paymentMethod.value === 'sslcommerz'
+        ? 'Pay with SSL Commerz'
+        : 'Place Order (COD)';
+});
+
 async function placeOrder() {
     generalError.value = null;
 
@@ -109,11 +118,6 @@ async function placeOrder() {
         return;
     }
 
-    if (paymentMethod.value === 'sslcommerz') {
-        toast.info('SSL Commerz payments are coming soon. Please use Cash on Delivery.');
-        return;
-    }
-
     if (!validate()) {
         return;
     }
@@ -121,7 +125,7 @@ async function placeOrder() {
     placingOrder.value = true;
 
     try {
-        const order = await createOrder({
+        const orderPayload = {
             total_amount: total.value,
             shipping_address: buildShippingAddress(),
             items: items.value.map((item) => ({
@@ -129,7 +133,22 @@ async function placeOrder() {
                 quantity: item.quantity,
                 price: item.product.price,
             })),
-        });
+        };
+
+        const order = await createOrder(orderPayload);
+
+        if (paymentMethod.value === 'sslcommerz') {
+            sessionStorage.setItem(
+                'pending_payment_order_id',
+                String(order.id),
+            );
+
+            const { gatewayUrl } = await initiatePayment(order.id);
+            await clearCart();
+
+            window.location.href = gatewayUrl;
+            return;
+        }
 
         await clearCart();
 
@@ -323,35 +342,18 @@ async function placeOrder() {
                             v-for="option in paymentOptions"
                             :key="option.key"
                             type="button"
-                            :disabled="option.disabled"
                             :class="
                                 cn(
                                     'flex items-center gap-2 rounded-lg border-2 p-4 text-sm font-medium transition-colors',
-                                    option.disabled &&
-                                        'cursor-not-allowed opacity-60',
                                     paymentMethod === option.key
                                         ? 'border-primary bg-accent'
-                                        : 'border-border hover:border-foreground/30',
-                                    !option.disabled &&
-                                        paymentMethod !== option.key &&
-                                        'hover:bg-muted/50',
+                                        : 'border-border hover:border-foreground/30 hover:bg-muted/50',
                                 )
                             "
-                            @click="
-                                !option.disabled &&
-                                    (paymentMethod = option.key)
-                            "
+                            @click="paymentMethod = option.key"
                         >
                             <component :is="option.icon" class="size-4 shrink-0" />
-                            <span class="text-left">
-                                {{ option.label }}
-                                <span
-                                    v-if="option.disabled"
-                                    class="mt-0.5 block text-xs font-normal text-muted-foreground"
-                                >
-                                    Coming soon
-                                </span>
-                            </span>
+                            <span class="text-left">{{ option.label }}</span>
                         </button>
                     </div>
 
@@ -366,8 +368,9 @@ async function placeOrder() {
                         v-else
                         class="mt-4 rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground"
                     >
-                        Pay securely online via SSL Commerz. This option will be
-                        available soon.
+                        Pay securely online via SSL Commerz using bKash, Nagad,
+                        cards, or mobile banking. You will be redirected to the
+                        payment gateway to complete your purchase.
                     </p>
                 </section>
             </div>
@@ -449,19 +452,10 @@ async function placeOrder() {
                         size="lg"
                         type="submit"
                         class="mt-6 w-full"
-                        :disabled="
-                            placingOrder ||
-                            cartLoading ||
-                            !items.length ||
-                            paymentMethod !== 'cod'
-                        "
+                        :disabled="placingOrder || cartLoading || !items.length"
                     >
                         <Lock class="size-4" />
-                        {{
-                            placingOrder
-                                ? 'Placing order…'
-                                : 'Place Order (COD)'
-                        }}
+                        {{ placeOrderLabel }}
                     </Button>
                     <Button variant="ghost" class="mt-2 w-full" as-child>
                         <Link :href="shopRoutes.cart()">Back to cart</Link>
