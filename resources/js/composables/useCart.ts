@@ -23,6 +23,11 @@ type AddToCartResponse = {
     cart: CartApiItem;
 };
 
+type UpdateCartResponse = {
+    message: string;
+    cart: CartApiItem;
+};
+
 function normalizeProduct(product: Product & { price?: number | string }): Product {
     return {
         ...product,
@@ -48,14 +53,27 @@ const error = ref<string | null>(null);
 const addLoading = ref<number | null>(null);
 let watcherInitialized = false;
 
-async function fetchCart(token: string | null): Promise<void> {
+function recalculateTotalPrice(): void {
+    totalPrice.value = items.value.reduce(
+        (sum, item) => sum + item.product.price * item.quantity,
+        0,
+    );
+}
+
+async function fetchCart(
+    token: string | null,
+    options: { silent?: boolean } = {},
+): Promise<void> {
     if (!token) {
         items.value = [];
         totalPrice.value = 0;
         return;
     }
 
-    loading.value = true;
+    if (!options.silent) {
+        loading.value = true;
+    }
+
     error.value = null;
 
     try {
@@ -66,11 +84,15 @@ async function fetchCart(token: string | null): Promise<void> {
                 ? parseFloat(data.total_price)
                 : data.total_price;
     } catch (e) {
-        error.value = e instanceof Error ? e.message : 'Failed to load cart';
-        items.value = [];
-        totalPrice.value = 0;
+        if (!options.silent) {
+            error.value = e instanceof Error ? e.message : 'Failed to load cart';
+            items.value = [];
+            totalPrice.value = 0;
+        }
     } finally {
-        loading.value = false;
+        if (!options.silent) {
+            loading.value = false;
+        }
     }
 }
 
@@ -125,7 +147,7 @@ export function useCart() {
                 token: token.value,
                 body: JSON.stringify({ product_id: productId, quantity }),
             });
-            await fetchCart(token.value);
+            await fetchCart(token.value, { silent: true });
 
             const productName = normalizeProduct(data.cart.product).name;
             toast.success('Added to cart', {
@@ -157,16 +179,30 @@ export function useCart() {
             return;
         }
 
+        const index = items.value.findIndex((item) => item.id === cartId);
+        if (index === -1) {
+            return;
+        }
+
+        const previousQuantity = items.value[index].quantity;
+        items.value[index].quantity = quantity;
+        recalculateTotalPrice();
+
         try {
-            await apiFetch(`/cart/${cartId}`, {
+            const data = await apiFetch<UpdateCartResponse>(`/cart/${cartId}`, {
                 method: 'PUT',
                 token: token.value,
                 body: JSON.stringify({ quantity }),
             });
-            await fetchCart(token.value);
+            items.value[index] = mapCartItem(data.cart);
+            recalculateTotalPrice();
         } catch (e) {
-            error.value =
-                e instanceof Error ? e.message : 'Failed to update cart item';
+            items.value[index].quantity = previousQuantity;
+            recalculateTotalPrice();
+
+            toast.error(
+                e instanceof Error ? e.message : 'Failed to update cart item',
+            );
         }
     }
 
@@ -175,15 +211,27 @@ export function useCart() {
             return;
         }
 
+        const index = items.value.findIndex((item) => item.id === cartId);
+        if (index === -1) {
+            return;
+        }
+
+        const removedItem = items.value[index];
+        items.value = items.value.filter((item) => item.id !== cartId);
+        recalculateTotalPrice();
+
         try {
             await apiFetch(`/cart/${cartId}`, {
                 method: 'DELETE',
                 token: token.value,
             });
-            await fetchCart(token.value);
         } catch (e) {
-            error.value =
-                e instanceof Error ? e.message : 'Failed to remove cart item';
+            items.value.splice(index, 0, removedItem);
+            recalculateTotalPrice();
+
+            toast.error(
+                e instanceof Error ? e.message : 'Failed to remove cart item',
+            );
         }
     }
 

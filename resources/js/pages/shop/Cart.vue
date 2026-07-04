@@ -100,7 +100,8 @@ async function remove(id: number) {
                     <div
                         v-for="item in items"
                         :key="item.id"
-                        class="flex gap-4 p-4"
+                        class="flex gap-4 p-4 transition-opacity duration-150"
+                        :class="{ 'opacity-50': updatingId === item.id }"
                     >
                         <Link
                             :href="shopRoutes.product(item.product.id)"
