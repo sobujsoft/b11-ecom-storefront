@@ -11,6 +11,7 @@ import {
     User,
 } from '@lucide/vue';
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,8 @@ const { user, isLoggedIn, clearAuth } = useShopAuth();
 const { itemCount } = useCart();
 const { itemCount: wishlistCount } = useWishlist();
 const { isCurrentUrl } = useCurrentUrl();
+
+const showAccountMenu = computed(() => isLoggedIn.value && user.value !== null);
 
 const navItems = [
     { title: 'Home', href: shopRoutes.home() },
@@ -115,7 +118,7 @@ function logout() {
 
                         <!-- Mobile auth links -->
                         <div class="mt-6 border-t pt-4">
-                            <template v-if="isLoggedIn && user">
+                            <template v-if="showAccountMenu && user">
                                 <p class="px-3 text-sm font-medium">{{ user.name }}</p>
                                 <p class="px-3 text-xs text-muted-foreground">{{ user.email }}</p>
                                 <button
@@ -125,7 +128,7 @@ function logout() {
                                     Log out
                                 </button>
                             </template>
-                            <template v-else>
+                            <template v-if="!showAccountMenu">
                                 <Link
                                     :href="shopRoutes.login()"
                                     class="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
@@ -204,7 +207,7 @@ function logout() {
                 </Button>
 
                 <!-- Logged-in user dropdown -->
-                <DropdownMenu v-if="isLoggedIn && user">
+                <DropdownMenu v-if="showAccountMenu && user">
                     <DropdownMenuTrigger :as-child="true">
                         <Button variant="ghost" size="icon" class="rounded-full">
                             <Avatar class="size-8">
@@ -244,7 +247,7 @@ function logout() {
                 </DropdownMenu>
 
                 <!-- Guest actions -->
-                <template v-else>
+                <template v-if="!showAccountMenu">
                     <Button variant="ghost" size="icon" as-child aria-label="Sign in">
                         <Link :href="shopRoutes.login()">
                             <User class="size-5" />
