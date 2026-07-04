@@ -38,6 +38,28 @@ function mapPayment(payment: PaymentApiResponse): Payment {
 export function usePayments() {
     const { token } = useShopAuth();
 
+    async function fetchPayments(): Promise<Payment[]> {
+        if (!token.value) {
+            return [];
+        }
+
+        const data = await apiFetch<PaymentApiResponse[]>('/payments', {
+            token: token.value,
+        });
+
+        return data.map(mapPayment);
+    }
+
+    async function findPaymentByTransactionId(
+        transactionId: string,
+    ): Promise<Payment | null> {
+        const payments = await fetchPayments();
+
+        return (
+            payments.find((p) => p.transaction_id === transactionId) ?? null
+        );
+    }
+
     async function initiatePayment(orderId: number): Promise<{
         payment: Payment;
         gatewayUrl: string;
@@ -75,8 +97,19 @@ export function usePayments() {
         return mapPayment(data);
     }
 
+    async function retryPayment(orderId: number): Promise<void> {
+        sessionStorage.setItem('pending_payment_order_id', String(orderId));
+
+        const { gatewayUrl } = await initiatePayment(orderId);
+
+        window.location.href = gatewayUrl;
+    }
+
     return {
+        fetchPayments,
+        findPaymentByTransactionId,
         initiatePayment,
         fetchPayment,
+        retryPayment,
     };
 }
