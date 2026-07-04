@@ -20,6 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getInitials } from '@/composables/useInitials';
 import { useCart } from '@/composables/useCart';
+import { useWishlist } from '@/composables/useWishlist';
 import { apiFetch } from '@/lib/api';
 import { formatPrice, shopRoutes } from '@/lib/shop';
 import { cn } from '@/lib/utils';
@@ -72,11 +73,26 @@ function dec() { if (quantity.value > 1) quantity.value--; }
 
 // ── Review submission ─────────────────────────────────────────────────────────
 const { addToCart, addLoading } = useCart();
+const { isInWishlist, toggleWishlist, toggleLoading } = useWishlist();
+
+const wishlisted = computed(() =>
+    product.value ? isInWishlist(product.value.id) : false,
+);
 
 async function handleAddToCart() {
     if (!product.value) return;
 
     const result = await addToCart(product.value.id, quantity.value);
+
+    if (!result.success && result.error?.includes('log in')) {
+        router.visit(shopRoutes.login());
+    }
+}
+
+async function handleToggleWishlist() {
+    if (!product.value) return;
+
+    const result = await toggleWishlist(product.value.id);
 
     if (!result.success && result.error?.includes('log in')) {
         router.visit(shopRoutes.login());
@@ -239,8 +255,27 @@ async function submitReview() {
                                 <ShoppingCart class="size-4" />
                                 {{ addLoading === product.id ? 'Adding…' : 'Add to Cart' }}
                             </Button>
-                            <Button size="lg" variant="outline" aria-label="Add to wishlist">
-                                <Heart class="size-4" />
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                :aria-label="
+                                    wishlisted
+                                        ? 'Remove from wishlist'
+                                        : 'Add to wishlist'
+                                "
+                                :disabled="
+                                    toggleLoading === product.id
+                                "
+                                @click="handleToggleWishlist"
+                            >
+                                <Heart
+                                    :class="
+                                        cn(
+                                            'size-4',
+                                            wishlisted && 'fill-red-500 text-red-500',
+                                        )
+                                    "
+                                />
                             </Button>
                         </div>
 

@@ -23,7 +23,17 @@ const styles: Record<string, string> = {
         'bg-neutral-100 text-neutral-600 dark:bg-neutral-500/15 dark:text-neutral-300',
 };
 
+const labels: Record<string, string> = {
+    completed: 'Delivered',
+    unpaid: 'Unpaid',
+    paid: 'Paid',
+    refunded: 'Refunded',
+};
+
 const cls = computed(() => styles[props.status] ?? styles.pending);
+const label = computed(
+    () => labels[props.status] ?? props.status.replace(/_/g, ' '),
+);
 </script>
 
 <template>
@@ -35,6 +45,6 @@ const cls = computed(() => styles[props.status] ?? styles.pending);
             )
         "
     >
-        {{ status }}
+        {{ label }}
     </span>
 </template>

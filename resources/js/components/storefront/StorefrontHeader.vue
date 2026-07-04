@@ -33,6 +33,7 @@ import {
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { useShopAuth } from '@/composables/useShopAuth';
 import { useCart } from '@/composables/useCart';
+import { useWishlist } from '@/composables/useWishlist';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
 import { categories, shopRoutes } from '@/lib/shop';
@@ -40,6 +41,7 @@ import { cn } from '@/lib/utils';
 
 const { user, isLoggedIn, clearAuth } = useShopAuth();
 const { itemCount } = useCart();
+const { itemCount: wishlistCount } = useWishlist();
 const { isCurrentUrl } = useCurrentUrl();
 
 const navItems = [
@@ -180,6 +182,12 @@ function logout() {
                 <Button variant="ghost" size="icon" as-child class="relative" aria-label="Wishlist">
                     <Link :href="shopRoutes.wishlist()">
                         <Heart class="size-5" />
+                        <Badge
+                            v-if="isLoggedIn && wishlistCount > 0"
+                            class="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full p-0 text-[10px]"
+                        >
+                            {{ wishlistCount > 99 ? '99+' : wishlistCount }}
+                        </Badge>
                     </Link>
                 </Button>
 

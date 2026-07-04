@@ -1,22 +1,16 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import {
-    ArrowLeft,
-    CheckCircle2,
-    ChevronRight,
-    MapPin,
-    Package,
-} from '@lucide/vue';
+import { ArrowLeft, ChevronRight, MapPin } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import OrderStatusBadge from '@/components/storefront/OrderStatusBadge.vue';
+import OrderTrackingTimeline from '@/components/storefront/OrderTrackingTimeline.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrders } from '@/composables/useOrders';
 import { useShopAuth } from '@/composables/useShopAuth';
 import { formatPrice, shopRoutes } from '@/lib/shop';
-import { cn } from '@/lib/utils';
-import type { Order, OrderStatus } from '@/types';
+import type { Order } from '@/types';
 
 const { isLoggedIn } = useShopAuth();
 const { fetchOrder } = useOrders();
@@ -70,21 +64,6 @@ function formatDate(value: string): string {
         minute: '2-digit',
     });
 }
-
-const timeline: { key: OrderStatus; label: string }[] = [
-    { key: 'pending', label: 'Order placed' },
-    { key: 'processing', label: 'Processing' },
-    { key: 'shipped', label: 'Shipped' },
-    { key: 'completed', label: 'Delivered' },
-];
-
-const stageIndex = computed(() => {
-    if (!order.value || order.value.status === 'cancelled') {
-        return -1;
-    }
-
-    return timeline.findIndex((step) => step.key === order.value!.status);
-});
 </script>
 
 <template>
@@ -146,80 +125,7 @@ const stageIndex = computed(() => {
                 </div>
             </div>
 
-            <!-- Timeline -->
-            <div
-                v-if="order.status !== 'cancelled'"
-                class="mt-8 rounded-xl border p-6"
-            >
-                <div class="flex items-center justify-between">
-                    <div
-                        v-for="(step, index) in timeline"
-                        :key="step.key"
-                        class="flex flex-1 flex-col items-center text-center"
-                    >
-                        <div class="flex w-full items-center">
-                            <div
-                                :class="
-                                    cn(
-                                        'h-0.5 flex-1',
-                                        index === 0
-                                            ? 'bg-transparent'
-                                            : index <= stageIndex
-                                              ? 'bg-primary'
-                                              : 'bg-border',
-                                    )
-                                "
-                            ></div>
-                            <span
-                                :class="
-                                    cn(
-                                        'flex size-9 shrink-0 items-center justify-center rounded-full border-2',
-                                        index <= stageIndex
-                                            ? 'border-primary bg-primary text-primary-foreground'
-                                            : 'border-border bg-background text-muted-foreground',
-                                    )
-                                "
-                            >
-                                <CheckCircle2
-                                    v-if="index <= stageIndex"
-                                    class="size-4"
-                                />
-                                <Package v-else class="size-4" />
-                            </span>
-                            <div
-                                :class="
-                                    cn(
-                                        'h-0.5 flex-1',
-                                        index === timeline.length - 1
-                                            ? 'bg-transparent'
-                                            : index < stageIndex
-                                              ? 'bg-primary'
-                                              : 'bg-border',
-                                    )
-                                "
-                            ></div>
-                        </div>
-                        <p
-                            :class="
-                                cn(
-                                    'mt-2 text-xs font-medium',
-                                    index <= stageIndex
-                                        ? 'text-foreground'
-                                        : 'text-muted-foreground',
-                                )
-                            "
-                        >
-                            {{ step.label }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div
-                v-else
-                class="mt-8 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
-            >
-                This order was cancelled and the payment was refunded.
-            </div>
+            <OrderTrackingTimeline :status="order.status" />
 
             <div class="mt-8 grid gap-8 lg:grid-cols-3">
                 <!-- Items -->
