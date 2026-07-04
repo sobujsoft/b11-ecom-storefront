@@ -32,12 +32,14 @@ import {
 } from '@/components/ui/sheet';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { useShopAuth } from '@/composables/useShopAuth';
+import { useCart } from '@/composables/useCart';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
 import { categories, shopRoutes } from '@/lib/shop';
 import { cn } from '@/lib/utils';
 
 const { user, isLoggedIn, clearAuth } = useShopAuth();
+const { itemCount } = useCart();
 const { isCurrentUrl } = useCurrentUrl();
 
 const navItems = [
@@ -184,6 +186,12 @@ function logout() {
                 <Button variant="ghost" size="icon" as-child class="relative" aria-label="Cart">
                     <Link :href="shopRoutes.cart()">
                         <ShoppingCart class="size-5" />
+                        <Badge
+                            v-if="isLoggedIn && itemCount > 0"
+                            class="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full p-0 text-[10px]"
+                        >
+                            {{ itemCount > 99 ? '99+' : itemCount }}
+                        </Badge>
                     </Link>
                 </Button>
 

@@ -1,15 +1,27 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { Heart, ShoppingCart } from '@lucide/vue';
 import ProductRating from '@/components/storefront/ProductRating.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { useCart } from '@/composables/useCart';
 import { formatPrice, shopRoutes } from '@/lib/shop';
 import type { Product } from '@/types';
 
-defineProps<{
+const props = defineProps<{
     product: Product;
 }>();
+
+const { addToCart, addLoading } = useCart();
+
+async function handleAddToCart() {
+    const result = await addToCart(props.product.id);
+
+    if (!result.success && result.error?.includes('log in')) {
+        router.visit(shopRoutes.login());
+    }
+}
 </script>
 
 <template>
@@ -84,8 +96,17 @@ defineProps<{
                         {{ formatPrice(product.old_price) }}
                     </span>
                 </div>
-                <Button size="icon" aria-label="Add to cart">
-                    <ShoppingCart class="size-4" />
+                <Button
+                    size="icon"
+                    aria-label="Add to cart"
+                    :disabled="addLoading === product.id"
+                    @click.stop="handleAddToCart"
+                >
+                    <Spinner
+                        v-if="addLoading === product.id"
+                        class="size-4"
+                    />
+                    <ShoppingCart v-else class="size-4" />
                 </Button>
             </div>
         </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     Check,
     ChevronRight,
@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getInitials } from '@/composables/useInitials';
+import { useCart } from '@/composables/useCart';
 import { apiFetch } from '@/lib/api';
 import { formatPrice, shopRoutes } from '@/lib/shop';
 import { cn } from '@/lib/utils';
@@ -70,6 +71,18 @@ function inc() { quantity.value++; }
 function dec() { if (quantity.value > 1) quantity.value--; }
 
 // ── Review submission ─────────────────────────────────────────────────────────
+const { addToCart, addLoading } = useCart();
+
+async function handleAddToCart() {
+    if (!product.value) return;
+
+    const result = await addToCart(product.value.id, quantity.value);
+
+    if (!result.success && result.error?.includes('log in')) {
+        router.visit(shopRoutes.login());
+    }
+}
+
 const newRating = ref(5);
 const newComment = ref('');
 const submitLoading = ref(false);
@@ -217,9 +230,14 @@ async function submitReview() {
                                     <Plus class="size-4" />
                                 </Button>
                             </div>
-                            <Button size="lg" class="flex-1">
+                            <Button
+                                size="lg"
+                                class="flex-1"
+                                :disabled="addLoading === product.id"
+                                @click="handleAddToCart"
+                            >
                                 <ShoppingCart class="size-4" />
-                                Add to Cart
+                                {{ addLoading === product.id ? 'Adding…' : 'Add to Cart' }}
                             </Button>
                             <Button size="lg" variant="outline" aria-label="Add to wishlist">
                                 <Heart class="size-4" />

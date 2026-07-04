@@ -5,10 +5,16 @@ import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { cartItems as initialCart, formatPrice, shopRoutes } from '@/lib/shop';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCart } from '@/composables/useCart';
+import { useShopAuth } from '@/composables/useShopAuth';
+import { formatPrice, shopRoutes } from '@/lib/shop';
 import type { CartItem } from '@/types';
 
-const items = ref<CartItem[]>(initialCart.map((item) => ({ ...item })));
+const { isLoggedIn } = useShopAuth();
+const { items, loading, error, updateQuantity, removeItem } = useCart();
+
+const updatingId = ref<number | null>(null);
 
 const subtotal = computed(() =>
     items.value.reduce(
@@ -22,11 +28,17 @@ const shipping = computed(() =>
 const tax = computed(() => subtotal.value * 0.05);
 const total = computed(() => subtotal.value + shipping.value + tax.value);
 
-function changeQty(item: CartItem, delta: number) {
-    item.quantity = Math.max(1, item.quantity + delta);
+async function changeQty(item: CartItem, delta: number) {
+    const quantity = Math.max(1, item.quantity + delta);
+    updatingId.value = item.id;
+    await updateQuantity(item.id, quantity);
+    updatingId.value = null;
 }
-function remove(id: number) {
-    items.value = items.value.filter((item) => item.id !== id);
+
+async function remove(id: number) {
+    updatingId.value = id;
+    await removeItem(id);
+    updatingId.value = null;
 }
 </script>
 
@@ -36,11 +48,52 @@ function remove(id: number) {
     <div class="mx-auto max-w-7xl px-4 py-8">
         <h1 class="text-3xl font-bold tracking-tight">Shopping Cart</h1>
         <p class="mt-1 text-sm text-muted-foreground">
-            {{ items.length }} item{{ items.length === 1 ? '' : 's' }} in your
-            cart
+            <template v-if="loading">Loading your cart…</template>
+            <template v-else>
+                {{ items.length }} item{{ items.length === 1 ? '' : 's' }} in your
+                cart
+            </template>
         </p>
 
-        <div v-if="items.length" class="mt-8 grid gap-8 lg:grid-cols-3">
+        <!-- Not logged in -->
+        <div
+            v-if="!isLoggedIn"
+            class="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center"
+        >
+            <span
+                class="flex size-16 items-center justify-center rounded-full bg-muted"
+            >
+                <ShoppingCart class="size-7 text-muted-foreground" />
+            </span>
+            <p class="mt-4 text-lg font-semibold">Sign in to view your cart</p>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Your cart items are saved to your account.
+            </p>
+            <Button class="mt-6" as-child>
+                <Link :href="shopRoutes.login()">Sign in</Link>
+            </Button>
+        </div>
+
+        <!-- Error -->
+        <div
+            v-else-if="error"
+            class="mt-8 flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center"
+        >
+            <p class="font-medium text-destructive">{{ error }}</p>
+            <p class="mt-1 text-sm text-muted-foreground">
+                Make sure the backend server is running.
+            </p>
+            <Button class="mt-4" variant="outline" as-child>
+                <Link :href="shopRoutes.products()">Back to shop</Link>
+            </Button>
+        </div>
+
+        <!-- Loading -->
+        <div v-else-if="loading" class="mt-8 space-y-4">
+            <Skeleton v-for="n in 3" :key="n" class="h-28 w-full rounded-xl" />
+        </div>
+
+        <div v-else-if="items.length" class="mt-8 grid gap-8 lg:grid-cols-3">
             <!-- Items -->
             <div class="lg:col-span-2">
                 <div class="divide-y rounded-xl border">
@@ -86,6 +139,7 @@ function remove(id: number) {
                                     size="icon"
                                     class="text-muted-foreground hover:text-destructive"
                                     aria-label="Remove item"
+                                    :disabled="updatingId === item.id"
                                     @click="remove(item.id)"
                                 >
                                     <Trash2 class="size-4" />
@@ -103,6 +157,7 @@ function remove(id: number) {
                                         size="icon-sm"
                                         class="rounded-r-none"
                                         aria-label="Decrease"
+                                        :disabled="updatingId === item.id"
                                         @click="changeQty(item, -1)"
                                     >
                                         <Minus class="size-3.5" />
@@ -116,6 +171,7 @@ function remove(id: number) {
                                         size="icon-sm"
                                         class="rounded-l-none"
                                         aria-label="Increase"
+                                        :disabled="updatingId === item.id"
                                         @click="changeQty(item, 1)"
                                     >
                                         <Plus class="size-3.5" />

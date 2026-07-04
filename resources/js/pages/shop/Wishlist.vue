@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Heart, ShoppingCart, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import ProductRating from '@/components/storefront/ProductRating.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useCart } from '@/composables/useCart';
 import {
     formatPrice,
     shopRoutes,
@@ -13,9 +14,18 @@ import {
 import type { WishlistItem } from '@/types';
 
 const items = ref<WishlistItem[]>(initialWishlist.map((item) => ({ ...item })));
+const { addToCart, addLoading } = useCart();
 
 function remove(id: number) {
     items.value = items.value.filter((item) => item.id !== id);
+}
+
+async function handleAddToCart(productId: number) {
+    const result = await addToCart(productId);
+
+    if (!result.success && result.error?.includes('log in')) {
+        router.visit(shopRoutes.login());
+    }
 }
 </script>
 
@@ -65,9 +75,14 @@ function remove(id: number) {
                         {{ formatPrice(item.product.price) }}
                     </p>
                     <div class="mt-auto flex items-center gap-2 pt-3">
-                        <Button size="sm" class="flex-1">
+                        <Button
+                            size="sm"
+                            class="flex-1"
+                            :disabled="addLoading === item.product.id"
+                            @click="handleAddToCart(item.product.id)"
+                        >
                             <ShoppingCart class="size-4" />
-                            Add to cart
+                            {{ addLoading === item.product.id ? 'Adding…' : 'Add to cart' }}
                         </Button>
                         <Button
                             size="icon-sm"
